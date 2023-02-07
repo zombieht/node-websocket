@@ -1,4 +1,4 @@
-# nodeWebsocket
+# node-websocket
 a simple node.js websocket server for docker
 ## step 1
 ```
