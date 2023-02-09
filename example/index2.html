@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+  <title>manu tv</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dplayer/1.25.0/DPlayer.min.css" />
+  <style>
+    #dplayer {
+      max-width: 960px;
+      width: 70%;
+      height: 620px;
+      /* margin: 0 auto; */
+      float: left;
+    }
+
+
+    #talk {
+      width: 30%;
+      float: left;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.2.2/dist/css/uikit.min.css" />
+
+  <!-- UIkit JS -->
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.2.2/dist/js/uikit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.2.2/dist/js/uikit-icons.min.js"></script>
+</head>
+
+<body>
+  <div class="uk-flex uk-flex-center">
+    <div id="dplayer"></div>
+    <div id="talk">
+      <form onsubmit="return false;">
+        <!-- <h3>WebSocket 聊天室：</h3> -->
+        <textarea id="responseText" style="width: 300px; height: 580px;"></textarea>
+        <br>
+        <input type="text" name="message" style="width: 100px" value="hello">
+        <input type="button" value="发送消息" onclick="send(this.form.message.value)">
+        <input type="button" onclick="javascript:document.getElementById('responseText').value=''" value="清空聊天记录">
+      </form>
+    </div>
+  </div>
+  <script src="https://cdn.bootcdn.net/ajax/libs/flv.js/1.6.2/flv.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/dplayer/1.27.1/DPlayer.min.js"></script>
+  <script src="./random-name.js"></script>
+  <script>
+    const ws = new WebSocket("ws://localhost:8082");
+
+    let name = randomName.getNickName() + ':';
+    console.log(name);
+    const dp = new DPlayer({
+      container: document.getElementById("dplayer"),
+      live: true,
+      danmaku: true,
+      apiBackend: {
+        read: function (options) {
+          console.log("Pretend to connect WebSocket");
+          ws.onmessage = function (e) {
+            var e = JSON.parse(e.data)
+
+            ta.value = ta.value + '\n' + e.author + e.text;
+            const danamku = {
+              text: e.text,
+              color: "#fff",
+              type: "right",
+            };
+            dp.danmaku.draw(danamku);
+          };
+          options.success([]);
+        },
+        send: function (options) {
+          console.log("Pretend to send danmaku via WebSocket", options.data);
+          let danmu = {
+            text: options.data.text,
+            author: name,
+            color: "#fff",
+            type: "right",
+            time: options.data.time,
+          };
+          ta.value = ta.value + '\n' + name + options.data.text;
+          ws.send(JSON.stringify(danmu));
+          options.success();
+        },
+      },
+      video: {
+        url: "localhost/livestream.flv",
+        type: "auto",
+      },
+    });
+
+    var ta = document.getElementById('responseText');
+    function send(message) {
+      ta.value = ta.value + '\n' + name + message;
+      let data = {
+        text: message,
+        author: name,
+        color: "#fff",
+        type: "right",
+      };
+      ws.send(JSON.stringify(data));
+      const danamku = {
+        text: message,
+        color: "#fff",
+        type: "right",
+      };
+      dp.danmaku.draw(danamku);
+
+    };
+  </script>
+</body>
+
+</html>
